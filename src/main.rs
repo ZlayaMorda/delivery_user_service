@@ -8,8 +8,8 @@ use diesel::{
     PgConnection
 };
 
-mod utils;
-use utils::db_utils::{get_pool, DbActor, AppState};
+mod db;
+use db::db_utils::{get_pool, DbActor, AppState};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
