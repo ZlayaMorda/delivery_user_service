@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
 
+
 #[Deserialize, Clone]
 #[derive(Insertable, Debug)]
 #[diesel(table_name = users)]
@@ -14,6 +15,20 @@ pub struct Users {
    pub is_deleted: bool,
    pub created_at: NaiveDateTime,
    pub updated_at: NaiveDateTime
+}
+
+#[derive(Debug,Deserialize)]
+pub struct RegisterUser {
+   pub first_name: String,
+   pub phone_number: String,
+   pub email: String,
+   pub password: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LoginUser {
+   pub phone_number: String,
+   pub password: String,
 }
 
 #[Deserialize, Clone]
