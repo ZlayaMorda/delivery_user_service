@@ -1,23 +1,30 @@
 use actix_web::{
     get, HttpResponse, post, web
 };
+use validator::Validate;
 
 use crate::{
     AppState,
-    models::{
-        users::{User},
-    },
 };
-use crate::models::users::RegisterUser;
+use crate::models::users::{ RegisterUser, User };
 
-use crate::repository::users::user_phone_exist;
+use crate::repository::users::{find_user};
+use crate::services::users::register_insert_user;
 
 #[post("/auth/register")]
 pub async fn register_user_handler(
     body: web::Json<RegisterUser>,
     data: web::Data<AppState>,
-) {
+) -> HttpResponse {
 
+    match body.validate() {
+      Ok(_) => (),
+      Err(error) => return HttpResponse::BadRequest().json(
+          format!("{:?}", error)
+      )
+    };
+
+    register_insert_user(&body, &data)
 }
 
 #[post("/auth/get")]
@@ -25,10 +32,12 @@ pub async fn get_user_handler(
     body: web::Json<User>,
     data: web::Data<AppState>,
 ) -> HttpResponse {
-    let user = user_phone_exist(
+
+    let user = find_user(
         &body.user_uuid,
         &mut data.db.get().unwrap()
     );
+
     match user {
         Ok(result) => HttpResponse::Ok().json(
             serde_json::to_string(&result).unwrap()),

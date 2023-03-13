@@ -3,6 +3,7 @@ use serde::{Serialize, Deserialize};
 use diesel::prelude::*;
 use uuid::Uuid;
 use crate::db::schema::*;
+use validator::Validate;
 
 
 #[derive(Serialize, Queryable, Insertable, Deserialize, Clone, Debug)]
@@ -21,11 +22,15 @@ pub struct User {
    pub updated_at: Option<NaiveDateTime>
 }
 
-#[derive(Serialize, Queryable, Insertable, Debug, Deserialize)]
+#[derive(Serialize, Insertable, Debug, Deserialize, Validate)]
 #[diesel(table_name = users)]
 pub struct RegisterUser {
+   #[validate(length(min = 2, max = 64,
+   message = "Name must be less than 64 characters and greater than 2"))]
    pub first_name: String,
+   #[validate(phone)]
    pub phone_number: String,
+   #[validate(email)]
    pub email: String,
    pub password: String,
 }

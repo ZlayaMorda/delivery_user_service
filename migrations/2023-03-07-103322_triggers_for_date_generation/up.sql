@@ -10,7 +10,7 @@ BEGIN
   IF (tg_op = 'UPDATE') THEN
     UPDATE users
     SET    updated_at = current_timestamp
-    WHERE  uuid = NEW.uuid;
+    WHERE  user_uuid = NEW.user_uuid;
 
   END IF;
   RETURN NULL;
@@ -32,7 +32,7 @@ BEGIN
   IF (tg_op = 'UPDATE') THEN
     UPDATE couriers
     SET    updated_at = current_timestamp
-    WHERE  uuid = NEW.uuid;
+    WHERE  user_uuid = NEW.user_uuid;
 
   END IF;
   RETURN NULL;

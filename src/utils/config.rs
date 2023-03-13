@@ -9,7 +9,7 @@ pub struct Config {
     pub secret: String,
     pub expires_in_days: u16,
     pub expires_in_minutes: u16,
-    pub solt: String,
+    pub salt: String,
 }
 
 impl Config {
@@ -31,7 +31,7 @@ impl Config {
         let expires_in_minutes = env::var("EXPIRES_IN_MINUTES").
             expect("JWT expires in minutes must be set").
             parse::<u16>().expect("Expires in minutes must be u16");
-        let solt = env::var("EXPIRES_IN_DAYS").
+        let salt = env::var("SALT").
             expect("Solt must be set");
 
         Config {
@@ -41,7 +41,7 @@ impl Config {
             secret,
             expires_in_days,
             expires_in_minutes,
-            solt,
+            salt,
         }
     }
 }

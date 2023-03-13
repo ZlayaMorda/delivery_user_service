@@ -11,7 +11,6 @@ use crate::AppState;
 use crate::models::token::TokenClaims;
 
 
-
 #[derive(Debug, Serialize)]
 struct ErrorResponse {
     status: String,
