@@ -3,7 +3,8 @@ use serde::{Serialize, Deserialize};
 use diesel::prelude::*;
 use uuid::Uuid;
 use crate::db::schema::*;
-use validator::Validate;
+use validator::{Validate, ValidationError};
+use crate::db::schema::users::password;
 
 
 #[derive(Serialize, Queryable, Insertable, Deserialize, Clone, Debug)]
@@ -32,11 +33,23 @@ pub struct RegisterUser {
    pub phone_number: String,
    #[validate(email)]
    pub email: String,
+   #[validate(length(min = 1, max = 100))]
    pub password: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
+#[diesel(table_name = users)]
 pub struct LoginUser {
+   #[validate(phone)]
+   pub phone_number: String,
+   #[validate(length(min = 1, max = 100))]
+   pub password: String,
+}
+
+#[derive(Queryable, Serialize, Deserialize)]
+#[diesel(table_name = users)]
+pub struct ResultLoginUser {
+   pub user_uuid: Uuid,
    pub phone_number: String,
    pub password: String,
 }

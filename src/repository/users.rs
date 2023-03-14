@@ -1,8 +1,10 @@
 use diesel::{insert_into, PgConnection, QueryDsl, RunQueryDsl};
+use diesel::associations::HasTable;
+use diesel::query_builder::AsQuery;
 use diesel::r2d2::{ConnectionManager, PooledConnection};
 
 use uuid::Uuid;
-use crate::models::users::{User};
+use crate::models::users::{ResultLoginUser, User};
 use crate::db::schema::users::dsl::*;
 use crate::diesel::ExpressionMethods;
 
@@ -31,4 +33,16 @@ pub fn insert_user(
         ))
         .returning(user_uuid)
         .get_result(connection)
+}
+
+pub fn find_login_user(
+    connection: &mut PooledConnection<ConnectionManager<PgConnection>>,
+    phone_number_ins: &str
+) -> Result<ResultLoginUser, diesel::result::Error> {
+
+    match users::table.filter(users::phone_number.eq(phone_number_ins)).
+        load::<ResultLoginUser>(&connection) {
+        Ok(user) => user,
+        Err(error) => Err(error)
+    }
 }
