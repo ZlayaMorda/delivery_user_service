@@ -37,7 +37,7 @@ pub struct RegisterUser {
    pub password: String,
 }
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Queryable, Deserialize, Validate)]
 #[diesel(table_name = users)]
 pub struct LoginUser {
    #[validate(phone)]

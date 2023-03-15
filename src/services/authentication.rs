@@ -47,11 +47,11 @@ pub fn check_password<'a>(
     password_input: &'a str,
     salt: &'a str,
     hash: &'a str
-) -> Result<bool, &'a str> {
-    match hashing_password(password_input, salt).expect("Cant") {
+) -> Result<(), &'a str> {
+    match hashing_password(password_input, salt) {
         Ok(check_hash) => {
-            if check_hash == hash {
-                Ok(true)
+            if check_hash.to_string() == hash {
+                Ok(())
             }
             else {
                 Err("Password is not right")

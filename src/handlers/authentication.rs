@@ -7,7 +7,7 @@ use crate::{
 use crate::models::users::{LoginUser, RegisterUser, User};
 
 use crate::repository::users::{find_user};
-use crate::services::users::register_insert_user;
+use crate::services::users::{login_user, register_insert_user};
 
 #[post("/auth/register")]
 pub async fn register_user_handler(
@@ -37,8 +37,7 @@ pub async fn login_user_handler(
       )
     };
 
-    return HttpResponse::Ok().json(
-            serde_json::to_string("ok").unwrap());
+    login_user(&body, &data)
 }
 
 #[post("/auth/get")]

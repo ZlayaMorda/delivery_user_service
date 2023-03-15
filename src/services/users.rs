@@ -1,9 +1,9 @@
 use actix_web::{HttpResponse, web};
 use serde_json::json;
 use crate::AppState;
-use crate::models::users::RegisterUser;
-use crate::repository::users::insert_user;
-use crate::services::authentication::{generate_jwt, hashing_password};
+use crate::models::users::{LoginUser, RegisterUser};
+use crate::repository::users::{find_login_user, insert_user};
+use crate::services::authentication::{check_password, generate_jwt, hashing_password};
 
 pub fn register_insert_user<'a>(
     body: &'a web::Json<RegisterUser>,
@@ -44,5 +44,37 @@ pub fn register_insert_user<'a>(
         },
         Err(error) => HttpResponse::Conflict().json(
             format!("{:?}", error))
+    }
+}
+
+pub fn login_user<'a>(
+    body: &'a web::Json<LoginUser>,
+    data: &'a web::Data<AppState>
+) -> HttpResponse {
+
+    let user = match find_login_user(
+        &mut data.db.get().expect("Cant get db data"),
+        & body.phone_number
+    ) {
+        Ok(user) => user,
+        Err(error) => return HttpResponse::Conflict().json(
+                format!("{:?}", error))
+    };
+
+    match check_password(&body.password, &data.env.salt, &user.password) {
+        Ok(()) => {
+            let jwt = generate_jwt(& user.user_uuid, &data);
+
+            match jwt {
+                Ok(token) => HttpResponse::Ok().json(
+                    serde_json::to_string(&token).unwrap()),
+                Err(error) => return HttpResponse::Conflict().json(
+                    format!("{:?}", error))
+            }
+        }
+        Err(error) => {
+            return HttpResponse::Conflict().json(
+                format!("{:?}", error))
+        }
     }
 }
