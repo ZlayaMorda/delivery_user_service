@@ -1,5 +1,7 @@
+use std::ops::Add;
+use std::str;
 use actix_web::web;
-use argon2::{Argon2, PasswordHash, PasswordHasher};
+use sha3::{Digest, Sha3_256};
 use chrono::{prelude::*, Duration};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use jsonwebtoken::errors::Error;
@@ -7,16 +9,14 @@ use uuid::Uuid;
 use crate::AppState;
 use crate::models::token::TokenClaims;
 
+
 pub fn hashing_password<'a>(
     password_input: &'a str,
     salt: &'a str
-) -> Result<PasswordHash<'a>, &'a str>{
+) -> String {
 
-    match Argon2::default()
-        .hash_password(password_input.as_bytes(), salt) {
-        Ok(result) => Ok(result),
-        Err(_error) => Err("Error while hashing password")
-    }
+    let data = salt.to_string().add(password_input);
+    format!("{:x}", Sha3_256::digest(data))
 }
 
 pub fn generate_jwt(user_id: &Uuid, data: & web::Data<AppState>) -> Result<String, Error> {
@@ -48,15 +48,10 @@ pub fn check_password<'a>(
     salt: &'a str,
     hash: &'a str
 ) -> Result<(), &'a str> {
-    match hashing_password(password_input, salt) {
-        Ok(check_hash) => {
-            if check_hash.to_string() == hash {
-                Ok(())
-            }
-            else {
-                Err("Password is not right")
-            }
-        }
-        Err(error) => Err(error)
+    if hashing_password(password_input, salt) == hash {
+        Ok(())
+    }
+    else {
+        Err("Password is not right")
     }
 }

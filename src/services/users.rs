@@ -9,16 +9,10 @@ pub fn register_insert_user<'a>(
     data: &'a web::Data<AppState>
 ) -> HttpResponse {
 
-    let hash_result = hashing_password(
+    let password_ins = hashing_password(
         &body.password,
         &data.env.salt
     );
-
-    let password_ins = match hash_result {
-        Ok(result) => result.to_string(),
-        Err(error) => return HttpResponse::Conflict().json(
-            format!("{:?}", error))
-    };
 
     let inserted_result = insert_user(
         &mut data.db.get().expect("Cant get db data"),
