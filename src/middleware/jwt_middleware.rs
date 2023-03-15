@@ -1,9 +1,11 @@
 use core::fmt;
 use std::future::{ready, Ready};
+use actix::fut::ok;
 
 use actix_web::error::ErrorUnauthorized;
-use actix_web::{dev::Payload, Error as ActixWebError};
+use actix_web::{dev::Payload, Error as ActixWebError, Error};
 use actix_web::{http, web, FromRequest, HttpMessage, HttpRequest};
+use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::Serialize;
 
@@ -68,4 +70,26 @@ impl FromRequest for JwtMiddleware {
 
         ready(Ok(JwtMiddleware { user_id }))
     }
+}
+
+pub struct CheckJWT;
+
+impl<S> Transform<S, ServiceRequest> for CheckJWT
+where
+    S: Service<ServiceRequest, Response = ServiceResponse, Error = Error>,
+    S::Future: 'static,
+{
+    type Response = ServiceResponse;
+    type Error = Error;
+    type Transform = CheckJWTMiddleware<S>;
+    type InitError = ();
+    type Future = Ready<Result<Self::Transform, Self::InitError>>;
+
+    fn new_transform(&self, service: S) -> Self::Future {
+        ok(CheckJWTMiddleware { service })
+    }
+}
+
+pub struct CheckJWTMiddleware<S> {
+    service: S,
 }

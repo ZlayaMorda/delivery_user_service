@@ -1,4 +1,4 @@
-use actix_web::{App, get, HttpResponse, post, web};
+use actix_web::{get, HttpResponse, post, web};
 use validator::Validate;
 
 use crate::{
@@ -38,25 +38,6 @@ pub async fn login_user_handler(
     };
 
     login_user(&body, &data)
-}
-
-#[post("/auth/get")]
-pub async fn get_user_handler(
-    body: web::Json<User>,
-    data: web::Data<AppState>,
-) -> HttpResponse {
-
-    let user = find_user(
-        &body.user_uuid,
-        &mut data.db.get().unwrap()
-    );
-
-    match user {
-        Ok(result) => HttpResponse::Ok().json(
-            serde_json::to_string(&result).unwrap()),
-        Err(error) => HttpResponse::InternalServerError().json(
-            format!("{:?}", error))
-    }
 }
 
 #[get("/show")]
