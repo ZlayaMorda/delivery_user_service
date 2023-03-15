@@ -1,5 +1,4 @@
 use actix_web::{HttpResponse, web};
-use serde_json::json;
 use crate::AppState;
 use crate::models::users::{LoginUser, RegisterUser};
 use crate::repository::users::{find_login_user, insert_user};
@@ -56,8 +55,14 @@ pub fn login_user<'a>(
         &mut data.db.get().expect("Cant get db data"),
         & body.phone_number
     ) {
-        Ok(user) => user,
-        Err(error) => return HttpResponse::Conflict().json(
+        Ok(vec_user) => {
+            match vec_user.first().cloned() {
+                Some(found_user) => found_user,
+                None => return HttpResponse::NotFound().json(
+                format!("User not found"))
+            }
+        },
+        Err(error) => return HttpResponse::NotFound().json(
                 format!("{:?}", error))
     };
 

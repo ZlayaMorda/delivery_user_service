@@ -3,8 +3,7 @@ use serde::{Serialize, Deserialize};
 use diesel::prelude::*;
 use uuid::Uuid;
 use crate::db::schema::*;
-use validator::{Validate, ValidationError};
-use crate::db::schema::users::password;
+use validator::{Validate};
 
 
 #[derive(Serialize, Queryable, Insertable, Deserialize, Clone, Debug)]
@@ -46,7 +45,7 @@ pub struct LoginUser {
    pub password: String,
 }
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, Clone)]
 #[diesel(table_name = users)]
 pub struct ResultLoginUser {
    pub user_uuid: Uuid,

@@ -1,7 +1,4 @@
-use actix_web::Error;
-use diesel::{insert_into, PgConnection, QueryDsl, RunQueryDsl};
-use diesel::associations::HasTable;
-use diesel::query_builder::AsQuery;
+use diesel::{insert_into, PgConnection, QueryDsl, QueryResult, RunQueryDsl};
 use diesel::r2d2::{ConnectionManager, PooledConnection};
 
 use uuid::Uuid;
@@ -39,18 +36,14 @@ pub fn insert_user(
 pub fn find_login_user<'a>(
     connection: &'a mut PooledConnection<ConnectionManager<PgConnection>>,
     phone_number_ins: &'a str
-) -> Result<&'a ResultLoginUser, diesel::result::Error> {
+) -> QueryResult<Vec<ResultLoginUser>> {
     //filter(phone_number.eq(phone_number_ins))
-    match users.filter(phone_number.eq(phone_number_ins)).
+    users.filter(phone_number.eq(phone_number_ins)).
         select((user_uuid, phone_number, password)).
         load::<ResultLoginUser>(connection)
-    {
-        Ok(vec_user) => {
-                match vec_user.first() {
-                    Some(user) => user,
-                    None => Err(Error::new("Do not found user"))
-                }
-            },
-        Err(error) => Err(error)
-    }
+
+    // match vec_user?.first() {
+    //     Some(user) => Ok(user.to_owned()),
+    //     None => Err(diesel::result::Error::NotFound)
+    // }
 }
