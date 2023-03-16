@@ -40,7 +40,6 @@ pub async fn login_user_handler(
     login_user(&body, &data)
 }
 
-#[get("/show")]
 pub async fn show_users() -> HttpResponse {
     HttpResponse::Ok().body("Show users")
 }
