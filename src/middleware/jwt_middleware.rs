@@ -1,12 +1,14 @@
 use core::fmt;
 use std::future::{ready, Ready};
+use std::rc::Rc;
 use actix::fut::ok;
 //use actix::fut::ok;
 
-use actix_web::error::{ErrorInternalServerError, ErrorUnauthorized};
-use actix_web::{dev::Payload, Either, Error, HttpResponse};
+use actix_web::error::{ErrorConflict, ErrorInternalServerError, ErrorUnauthorized};
+use actix_web::{App, dev::Payload, Either, Error, HttpResponse};
 use actix_web::{http, web, FromRequest, HttpMessage, HttpRequest};
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
+use actix_web::web::Data;
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::Serialize;
 use futures::future::LocalBoxFuture;
@@ -78,7 +80,7 @@ pub struct FactoryCheckJWT;
 
 impl<S, B> Transform<S, ServiceRequest> for FactoryCheckJWT
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
     S::Future: 'static,
     B: 'static,
 {
@@ -90,29 +92,17 @@ where
 
     fn new_transform(&self, service: S) -> Self::Future {
 
-        ready(Ok(CheckJWTMiddleware { service }))
+        ready(Ok(CheckJWTMiddleware { service: Rc::new(service) }))
     }
 }
 
 pub struct CheckJWTMiddleware<S> {
-    service: S,
-}
-
-#[derive(Debug, Serialize)]
-struct ErrorResponse {
-    status: String,
-    message: String,
-}
-
-impl fmt::Display for ErrorResponse {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", serde_json::to_string(&self).unwrap())
-    }
+    service: Rc<S>,
 }
 
 impl<S, B> Service<ServiceRequest> for CheckJWTMiddleware<S>
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
     S::Future: 'static,
     B: 'static,
 {
@@ -126,19 +116,34 @@ where
         // req.extensions_mut().insert();
         let token = req.headers()
                 .get(http::header::AUTHORIZATION)
-                .map(|h| h.to_str().unwrap().split_at(7).1.to_string());
-        let fut = self.service.call(req);
+                .map(|h| h.to_str().unwrap().to_string());//.split_at(7).1.to_string());
+
+        let service_clone = self.service.clone();
 
         Box::pin(async move {
-            if token.is_none() {
-                // let json_error = Error {
-                //     status: "fail".to_string(),
-                //     message: "kjksjkf".to_string()
-                // };
-                //return ok(req.into_response(HttpResponse::Unauthorized()));
-                Err(ErrorUnauthorized("sfdjk"))?
-            }
-            println!("Hi from response");
+            let token_str = match token {
+                Some(result) => result,
+                None => return Err(ErrorUnauthorized("Unauthorized, provide token"))
+            };
+
+            let data= match req.app_data::<Data<AppState>>()
+            {
+                Some(result) => result,
+                None => return Err(ErrorUnauthorized("Unauthorized, can't get app data")),
+            };
+            println!("{}", data.env.secret);
+            println!("{:?}", &token_str);
+            let claims = match decode::<TokenClaims>(
+                token_str.as_str(),
+                &DecodingKey::from_secret(data.env.secret.as_ref()),
+                &Validation::default(),
+            ) {
+                Ok(c) => c.claims,
+                Err(_) => { return Err(ErrorUnauthorized("Unauthorized, invalid token")) }
+            };
+
+
+            let fut = service_clone.call(req);
             let res = fut.await?;
             Ok(res)
         })
