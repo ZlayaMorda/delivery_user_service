@@ -1,50 +1,40 @@
+use std::collections::HashMap;
 use std::future::{ready, Ready};
 use std::rc::Rc;
 
 use actix_web::error::{ErrorUnauthorized};
-use actix_web::{Error, HttpMessage};
+use actix_web::{Error, HttpMessage, web};
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
+use diesel::row::NamedRow;
 use futures::future::LocalBoxFuture;
 
 use crate::models::users::MiddlewareUserInfo;
 
 
-pub struct FactoryPermissionCheck {
-    permission: Rc<Vec<String>>,
-}
+pub struct FactoryAdminOrOwnerId;
 
-impl FactoryPermissionCheck {
-    pub fn new(permission: Vec<String>) -> Self {
-        FactoryPermissionCheck {
-            permission: Rc::new(permission),
-        }
-    }
-}
-
-impl<S, B> Transform<S, ServiceRequest> for FactoryPermissionCheck
+impl<S, B> Transform<S, ServiceRequest> for FactoryAdminOrOwnerId
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static
 {
     type Response = ServiceResponse<B>;
     type Error = Error;
-    type Transform = CheckPermissionMiddleware<S>;
+    type Transform = AdminOrOwnerIdMiddleware<S>;
     type InitError = ();
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ready(Ok(CheckPermissionMiddleware {
-            permission: self.permission.clone(),
+        ready(Ok(AdminOrOwnerIdMiddleware {
             service: Rc::new(service),
         }))
     }
 }
 
-pub struct CheckPermissionMiddleware<S> {
-    permission: Rc<Vec<String>>,
+pub struct AdminOrOwnerIdMiddleware<S> {
     service: Rc<S>,
 }
 
-impl<S, B> Service<ServiceRequest> for CheckPermissionMiddleware<S>
+impl<S, B> Service<ServiceRequest> for AdminOrOwnerIdMiddleware<S>
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
 {
@@ -55,16 +45,23 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        // req.extensions_mut().insert();
-        let permission_clone = self.permission.clone();
+
         let service_clone = self.service.clone();
 
         Box::pin(async move {
             match req.extensions_mut().get::<MiddlewareUserInfo>() {
                 None => { return Err(ErrorUnauthorized("Permission denied")); }
                 Some(result) => {
-                    if !permission_clone.contains(& result.role) {
-                        return Err(ErrorUnauthorized("Permission denied"));
+                    if result.role != "admin" {
+
+                        match req.match_info().get("id") {
+                            None => { return Err(ErrorUnauthorized("Do not set id in uri")); }
+                            Some(id) => {
+                                if result.user_uuid.to_string() != id {
+                                    return Err(ErrorUnauthorized("Permission denied"));
+                                }
+                            }
+                        }
                     }
                 }
             };
@@ -74,4 +71,4 @@ where
             Ok(res)
         })
     }
-}
+}//8559b330-9e97-4b99-b055-45c88878be71
