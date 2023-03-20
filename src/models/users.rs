@@ -49,8 +49,14 @@ pub struct LoginUser {
 #[diesel(table_name = users)]
 pub struct ResultLoginUser {
    pub user_uuid: Uuid,
-   pub phone_number: String,
+   pub role: String,
+   // pub phone_number: String,
    pub password: String,
+}
+
+pub struct MiddlewareUserInfo {
+   pub user_uuid: Uuid,
+   pub role: String,
 }
 
 #[derive(Deserialize, Serialize, Insertable, Clone, Debug)]

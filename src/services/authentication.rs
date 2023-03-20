@@ -19,7 +19,7 @@ pub fn hashing_password<'a>(
     format!("{:x}", Sha3_256::digest(data))
 }
 
-pub fn generate_jwt(user_id: &Uuid, data: & web::Data<AppState>) -> Result<String, Error> {
+pub fn generate_jwt(user_id: &Uuid, user_role: &str, data: & web::Data<AppState>) -> Result<String, Error> {
 
     let now = Utc::now();
     let iat = now.timestamp() as usize;
@@ -28,6 +28,7 @@ pub fn generate_jwt(user_id: &Uuid, data: & web::Data<AppState>) -> Result<Strin
 
     let claims: TokenClaims = TokenClaims {
         sub: user_id.to_string(),
+        rol: user_role.to_string(),
         exp,
         iat,
     };

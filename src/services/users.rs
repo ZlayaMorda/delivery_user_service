@@ -24,7 +24,7 @@ pub fn register_insert_user<'a>(
 
     match inserted_result {
         Ok(user_id) => {
-            let token_result= generate_jwt(&user_id, &data);
+            let token_result= generate_jwt(&user_id, "user", &data);
 
             match token_result {
                 Ok(token) => HttpResponse::Ok().json(
@@ -62,7 +62,8 @@ pub fn login_user<'a>(
 
     match check_password(&body.password, &data.env.salt, &user.password) {
         Ok(()) => {
-            let jwt = generate_jwt(& user.user_uuid, &data);
+            let jwt = generate_jwt(
+                & user.user_uuid, & user.role, &data);
 
             match jwt {
                 Ok(token) => HttpResponse::Ok().json(

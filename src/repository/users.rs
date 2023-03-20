@@ -39,7 +39,7 @@ pub fn find_login_user<'a>(
 ) -> QueryResult<Vec<ResultLoginUser>> {
     //filter(phone_number.eq(phone_number_ins))
     users.filter(phone_number.eq(phone_number_ins)).
-        select((user_uuid, phone_number, password)).
+        select((user_uuid, role, password)).
         load::<ResultLoginUser>(connection)
 
     // match vec_user?.first() {
