@@ -28,7 +28,8 @@ pub fn register_insert_user<'a>(
 
             match token_result {
                 Ok(token) => HttpResponse::Ok().json(
-                serde_json::to_string(&token).unwrap()),
+                serde_json::to_string(&token).
+                    expect("Error while converting token to string")),
 
                 Err(error) => HttpResponse::Conflict().json(
                 format!("{:?}", error))
@@ -67,7 +68,8 @@ pub fn login_user<'a>(
 
             match jwt {
                 Ok(token) => HttpResponse::Ok().json(
-                    serde_json::to_string(&token).unwrap()),
+                    serde_json::to_string(&token).
+                        expect("Error while converting token to string")),
                 Err(error) => return HttpResponse::Conflict().json(
                     format!("{:?}", error))
             }

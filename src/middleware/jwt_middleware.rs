@@ -53,10 +53,11 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        // req.extensions_mut().insert();
+
         let token = req.headers()
                 .get(http::header::AUTHORIZATION)
-                .map(|h| h.to_str().unwrap().to_string());//.split_at(7).1.to_string());
+                .map(|h| h.to_str().
+                    expect("Error while converting token bytes to string").to_string());
 
         let service_clone = self.service.clone();
 

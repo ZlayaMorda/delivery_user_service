@@ -55,7 +55,7 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        // req.extensions_mut().insert();
+
         let permission_clone = self.permission.clone();
         let service_clone = self.service.clone();
 

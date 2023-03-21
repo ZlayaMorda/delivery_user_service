@@ -1,15 +1,13 @@
-use actix_web::{get, HttpResponse, post, web};
+use actix_web::{HttpResponse, post, web};
 use validator::Validate;
 
 use crate::{
     AppState,
 };
-use crate::models::users::{LoginUser, RegisterUser, User};
-
-use crate::repository::users::{find_user};
+use crate::models::users::{LoginUser, RegisterUser};
 use crate::services::users::{login_user, register_insert_user};
 
-#[post("/auth/register")]
+#[post("/auth/sign-up")]
 pub async fn register_user_handler(
     body: web::Json<RegisterUser>,
     data: web::Data<AppState>,
@@ -25,7 +23,7 @@ pub async fn register_user_handler(
     register_insert_user(&body, &data)
 }
 
-#[post("/auth/login")]
+#[post("/auth/sign-in")]
 pub async fn login_user_handler(
     body: web::Json<LoginUser>,
     data: web::Data<AppState>

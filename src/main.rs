@@ -32,8 +32,6 @@ async fn main() -> std::io::Result<()> {
     let service_port = config.service_port.clone();
 
     let pool: Pool<ConnectionManager<PgConnection>> = get_pool(&config.db_url);
-    // let db_addr = SyncArbiter::start(4, move || DbActor(pool.clone()));
-    // let db_connection = establish_connection(&config.db_url);
 
     HttpServer::new(move || {
         App::new()
@@ -42,7 +40,7 @@ async fn main() -> std::io::Result<()> {
                 env: config.clone(),
             }))
             .service(
-                web::scope("/api/v1")
+                web::scope("/api")
                     .configure(api::v1::users_config)
             )
     })

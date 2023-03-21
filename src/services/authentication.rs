@@ -3,7 +3,7 @@ use std::str;
 use actix_web::web;
 use sha3::{Digest, Sha3_256};
 use chrono::{prelude::*, Duration};
-use jsonwebtoken::{decode, DecodingKey, encode, EncodingKey, Header, Validation};
+use jsonwebtoken::{encode, EncodingKey, Header};
 use jsonwebtoken::errors::Error;
 use uuid::Uuid;
 use crate::AppState;
@@ -37,16 +37,6 @@ pub fn generate_jwt(user_id: &Uuid, user_role: &str, data: & web::Data<AppState>
         &claims,
         &EncodingKey::from_secret(&data.env.secret.as_bytes()),
     );
-    let token_new = token.clone();
-    println!("{:?}", token_new);
-    match decode::<TokenClaims>(
-        token_new.unwrap().as_str(),
-        &DecodingKey::from_secret(data.env.secret.as_ref()),
-        &Validation::default(),
-            ) {
-                Ok(c) => { println!("{:?}", c.claims);},
-                Err(_) => { println!("error"); }
-            };
 
     match token {
         Ok(result) => Ok(result),

@@ -50,7 +50,6 @@ pub struct LoginUser {
 pub struct ResultLoginUser {
    pub user_uuid: Uuid,
    pub role: String,
-   // pub phone_number: String,
    pub password: String,
 }
 

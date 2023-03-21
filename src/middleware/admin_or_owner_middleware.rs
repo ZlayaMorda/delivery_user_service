@@ -1,11 +1,9 @@
-use std::collections::HashMap;
 use std::future::{ready, Ready};
 use std::rc::Rc;
 
 use actix_web::error::{ErrorUnauthorized};
-use actix_web::{Error, HttpMessage, web};
+use actix_web::{Error, HttpMessage};
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
-use diesel::row::NamedRow;
 use futures::future::LocalBoxFuture;
 
 use crate::models::users::MiddlewareUserInfo;
