@@ -1,31 +1,52 @@
-use actix::SyncArbiter;
-use dotenv::dotenv;
-use std::{env,sync::Mutex};
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+extern crate diesel;
+use actix_web::{web, App, HttpServer};
 use actix_web::web::Data;
 use diesel::{
     r2d2::{ConnectionManager, Pool},
     PgConnection
 };
 
+mod utils;
+use utils::config::Config;
+
 mod db;
-use db::db_utils::{get_pool, DbActor, AppState};
+mod models;
+mod handlers;
+mod middleware;
+mod repository;
+mod services;
+mod api;
+
+use db::db_utils::{get_pool};
+
+
+pub struct AppState {
+    pub db: Pool<ConnectionManager<PgConnection>>,
+    pub env: Config,
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    dotenv().expect("Failed to read .env file");
+    let config = Config::init();
+    let service_host = config.service_host.clone();
+    let service_port = config.service_port.clone();
 
-    let db_url:String = env::var("DATABASE_URL").expect("Database url must be set");
-    let pool: Pool<ConnectionManager<PgConnection>> = get_pool(&db_url);
-    let db_addr = SyncArbiter::start(4, move || DbActor(pool.clone()));
+    let pool: Pool<ConnectionManager<PgConnection>> = get_pool(&config.db_url);
 
     HttpServer::new(move || {
         App::new()
-            .app_data(Data::new(AppState{ db: db_addr.clone() }))
+            .app_data(Data::new(AppState {
+                db: pool.clone(),
+                env: config.clone(),
+            }))
+            .service(
+                web::scope("/api")
+                    .configure(api::v1::users_config)
+            )
     })
     .bind((
-        env::var("SERVICE_HOST").unwrap(),
-        env::var("SERVICE_PORT").unwrap().parse::<u16>().unwrap()
+        service_host,
+        service_port
     ))?
     .run()
     .await
