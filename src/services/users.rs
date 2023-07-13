@@ -4,7 +4,7 @@ use crate::models::users::{LoginUser, RegisterUser};
 use crate::repository::users::{find_login_user, insert_user};
 use crate::services::authentication::{check_password, generate_jwt, hashing_password};
 
-pub fn register_insert_user<'a>(
+pub async fn register_insert_user<'a>(
     body: &'a web::Json<RegisterUser>,
     data: &'a web::Data<AppState>
 ) -> HttpResponse {
@@ -15,12 +15,12 @@ pub fn register_insert_user<'a>(
     );
 
     let inserted_result = insert_user(
-        &mut data.db.get().expect("Cant get db data"),
+        &mut data.db.get().await.expect("Cant get db data"),
         &body.first_name,
         &body.phone_number,
         &body.email,
         &password_ins
-    );
+    ).await;
 
     match inserted_result {
         Ok(user_id) => {
@@ -41,15 +41,15 @@ pub fn register_insert_user<'a>(
     }
 }
 
-pub fn login_user<'a>(
+pub async fn login_user<'a>(
     body: &'a web::Json<LoginUser>,
     data: &'a web::Data<AppState>
 ) -> HttpResponse {
 
     let user = match find_login_user(
-        &mut data.db.get().expect("Cant get db data"),
+        &mut data.db.get().await.expect("Cant get db data"),
         & body.phone_number
-    ) {
+    ).await {
         Ok(vec_user) => {
             match vec_user.first().cloned() {
                 Some(found_user) => found_user,

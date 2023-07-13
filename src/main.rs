@@ -1,10 +1,10 @@
 extern crate diesel;
 use actix_web::{web, App, HttpServer};
 use actix_web::web::Data;
-use diesel::{
-    r2d2::{ConnectionManager, Pool},
-    PgConnection
-};
+
+use bb8::Pool;
+use diesel_async::AsyncPgConnection;
+use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 
 mod utils;
 use utils::config::Config;
@@ -21,7 +21,7 @@ use db::db_utils::{get_pool};
 
 
 pub struct AppState {
-    pub db: Pool<ConnectionManager<PgConnection>>,
+    pub db: Pool<AsyncDieselConnectionManager<AsyncPgConnection>>,
     pub env: Config,
 }
 
@@ -31,7 +31,7 @@ async fn main() -> std::io::Result<()> {
     let service_host = config.service_host.clone();
     let service_port = config.service_port.clone();
 
-    let pool: Pool<ConnectionManager<PgConnection>> = get_pool(&config.db_url);
+    let pool: Pool<AsyncDieselConnectionManager<AsyncPgConnection>> = get_pool(&config.db_url).await;
 
     HttpServer::new(move || {
         App::new()

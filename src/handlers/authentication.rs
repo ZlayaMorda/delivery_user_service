@@ -20,7 +20,7 @@ pub async fn register_user_handler(
       )
     };
 
-    register_insert_user(&body, &data)
+    register_insert_user(&body, &data).await
 }
 
 #[post("/auth/sign-in")]
@@ -35,7 +35,7 @@ pub async fn login_user_handler(
       )
     };
 
-    login_user(&body, &data)
+    login_user(&body, &data).await
 }
 
 pub async fn show_users() -> HttpResponse {
