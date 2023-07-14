@@ -7,6 +7,7 @@ use uuid::Uuid;
 use crate::models::users::{ResultLoginUser, User};
 use crate::db::schema::users::dsl::*;
 use crate::diesel::ExpressionMethods;
+use crate::utils::errors::AuthorizationError;
 
 
 pub async fn find_user<'a>(
@@ -39,9 +40,11 @@ pub async fn insert_user <'a>(
 pub async fn find_login_user<'a>(
     connection: &mut PooledConnection<'a, AsyncDieselConnectionManager<AsyncPgConnection>>,
     phone_number_ins: &'a str
-) -> QueryResult<Vec<ResultLoginUser>> {
+) -> Result<ResultLoginUser, AuthorizationError> {
 
-    users.filter(phone_number.eq(phone_number_ins)).
-        select((user_uuid, role, password)).
-        load::<ResultLoginUser>(connection).await
+    match users.filter(phone_number.eq(phone_number_ins)).
+        select((user_uuid, role, password)).first(connection).await {
+        Ok(user) => { Ok(user) },
+        Err(_) => { Err(AuthorizationError::UserDoesNotExist("user does not exist".to_string())) }
+    }
 }

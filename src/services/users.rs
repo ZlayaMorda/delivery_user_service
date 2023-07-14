@@ -1,82 +1,42 @@
-use actix_web::{HttpResponse, web};
+use actix_web::{web};
 use crate::AppState;
 use crate::models::users::{LoginUser, RegisterUser};
 use crate::repository::users::{find_login_user, insert_user};
 use crate::services::authentication::{check_password, generate_jwt, hashing_password};
+use crate::utils::errors::AuthorizationError;
 
-pub async fn register_insert_user<'a>(
+pub async fn sign_up_user<'a>(
     body: &'a web::Json<RegisterUser>,
     data: &'a web::Data<AppState>
-) -> HttpResponse {
+) -> Result<String, AuthorizationError> {
 
     let password_ins = hashing_password(
         &body.password,
         &data.env.salt
     );
 
-    let inserted_result = insert_user(
-        &mut data.db.get().await.expect("Cant get db data"),
+    let user_id = insert_user(
+        &mut data.db.get().await.expect("Connection must be initialized in the main"),
         &body.first_name,
         &body.phone_number,
         &body.email,
         &password_ins
-    ).await;
+    ).await?;
 
-    match inserted_result {
-        Ok(user_id) => {
-            let token_result= generate_jwt(&user_id, "user", &data);
-
-            match token_result {
-                Ok(token) => HttpResponse::Ok().json(
-                serde_json::to_string(&token).
-                    expect("Error while converting token to string")),
-
-                Err(error) => HttpResponse::Conflict().json(
-                format!("{:?}", error))
-            }
-
-        },
-        Err(error) => HttpResponse::Conflict().json(
-            format!("{:?}", error))
-    }
+    Ok(generate_jwt(&user_id, "user", &data)?)
 }
 
 pub async fn login_user<'a>(
     body: &'a web::Json<LoginUser>,
     data: &'a web::Data<AppState>
-) -> HttpResponse {
+) -> Result<String, AuthorizationError> {
 
-    let user = match find_login_user(
-        &mut data.db.get().await.expect("Cant get db data"),
+    let user = find_login_user(
+        &mut data.db.get().await.expect("Connection must be initialized in the main"),
         & body.phone_number
-    ).await {
-        Ok(vec_user) => {
-            match vec_user.first().cloned() {
-                Some(found_user) => found_user,
-                None => return HttpResponse::NotFound().json(
-                format!("User not found"))
-            }
-        },
-        Err(error) => return HttpResponse::NotFound().json(
-                format!("{:?}", error))
-    };
+    ).await?;
 
-    match check_password(&body.password, &data.env.salt, &user.password) {
-        Ok(()) => {
-            let jwt = generate_jwt(
-                & user.user_uuid, & user.role, &data);
+    check_password(&body.password, &data.env.salt, &user.password)?;
 
-            match jwt {
-                Ok(token) => HttpResponse::Ok().json(
-                    serde_json::to_string(&token).
-                        expect("Error while converting token to string")),
-                Err(error) => return HttpResponse::Conflict().json(
-                    format!("{:?}", error))
-            }
-        }
-        Err(error) => {
-            return HttpResponse::Conflict().json(
-                format!("{:?}", error))
-        }
-    }
+    Ok(generate_jwt(& user.user_uuid, & user.role, &data)?)
 }

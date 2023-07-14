@@ -4,10 +4,10 @@ use actix_web::web;
 use sha3::{Digest, Sha3_256};
 use chrono::{prelude::*, Duration};
 use jsonwebtoken::{encode, EncodingKey, Header};
-use jsonwebtoken::errors::Error;
 use uuid::Uuid;
 use crate::AppState;
 use crate::models::token::TokenClaims;
+use crate::utils::errors::AuthorizationError;
 
 
 pub fn hashing_password<'a>(
@@ -19,7 +19,7 @@ pub fn hashing_password<'a>(
     format!("{:x}", Sha3_256::digest(data))
 }
 
-pub fn generate_jwt(user_id: &Uuid, user_role: &str, data: & web::Data<AppState>) -> Result<String, Error> {
+pub fn generate_jwt(user_id: &Uuid, user_role: &str, data: & web::Data<AppState>) -> Result<String, AuthorizationError> {
 
     let now = Utc::now();
     let iat = now.timestamp() as usize;
@@ -40,19 +40,19 @@ pub fn generate_jwt(user_id: &Uuid, user_role: &str, data: & web::Data<AppState>
 
     match token {
         Ok(result) => Ok(result),
-        Err(error) => Err(error)
+        Err(error) => Err(AuthorizationError::FailedToGenerateJWT(error.to_string()))
     }
 }
 
-pub fn check_password<'a>(
-    password_input: &'a str,
-    salt: &'a str,
-    hash: &'a str
-) -> Result<(), &'a str> {
+pub fn check_password(
+    password_input: &str,
+    salt: &str,
+    hash: &str
+) -> Result<(), AuthorizationError> {
     if hashing_password(password_input, salt) == hash {
         Ok(())
     }
     else {
-        Err("Password is not right")
+        Err(AuthorizationError::InvalidPassword("Invalid password".to_string()))
     }
 }

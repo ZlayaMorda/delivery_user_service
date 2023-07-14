@@ -5,10 +5,10 @@ use crate::{
     AppState,
 };
 use crate::models::users::{LoginUser, RegisterUser};
-use crate::services::users::{login_user, register_insert_user};
+use crate::services::users::{login_user, sign_up_user};
 
 #[post("/auth/sign-up")]
-pub async fn register_user_handler(
+pub async fn sign_up_handler(
     body: web::Json<RegisterUser>,
     data: web::Data<AppState>,
 ) -> HttpResponse {
@@ -20,7 +20,10 @@ pub async fn register_user_handler(
       )
     };
 
-    register_insert_user(&body, &data).await
+    match sign_up_user(&body, &data).await {
+        Ok(token) => HttpResponse::Ok().json(token),
+        Err(error) => HttpResponse::Unauthorized().json(error.to_string())
+    }
 }
 
 #[post("/auth/sign-in")]
@@ -35,7 +38,10 @@ pub async fn login_user_handler(
       )
     };
 
-    login_user(&body, &data).await
+    match login_user(&body, &data).await {
+        Ok(token) => HttpResponse::Ok().json(token),
+        Err(error) => HttpResponse::Unauthorized().json(error.to_string())
+    }
 }
 
 pub async fn show_users() -> HttpResponse {
