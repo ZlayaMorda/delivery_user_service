@@ -1,4 +1,4 @@
-use diesel::{insert_into, QueryDsl, QueryResult};
+use diesel::{insert_into, QueryDsl};
 use bb8::{PooledConnection};
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;

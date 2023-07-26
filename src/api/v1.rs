@@ -1,7 +1,7 @@
 use actix_web::web;
 
 use crate::handlers::{
-    authentication::{sign_up_handler, show_users, login_user_handler}
+    authentication::{sign_up_handler, show_users, sign_in_handler}
 };
 use crate::middleware::admin_or_owner_middleware::FactoryAdminOrOwnerId;
 use crate::middleware::jwt_middleware::FactoryCheckJWT;
@@ -18,7 +18,7 @@ pub fn users_config(conf: &mut web::ServiceConfig) {
                 .wrap(FactoryCheckJWT)
         )
         .service(sign_up_handler)
-        .service(login_user_handler);
+        .service(sign_in_handler);
 
     conf.service(scope);
 }

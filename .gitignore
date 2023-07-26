@@ -2,6 +2,7 @@
 
 .idea
 
-.env
+.env.dev
+.env.test
 
 data
